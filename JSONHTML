@@ -1,0 +1,4 @@
+Text = """__.Provide them in JSON format with the following keys: 
+book_id, title, author, genre."""
+response = get_completion(prompt)
+print(response)
