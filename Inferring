@@ -1,0 +1,8 @@
+prompt = f"""
+What is the sentiment of the following product review, 
+which is delimited with triple backticks?
+
+Review text: '''{lamp_review}'''
+"""
+response = get_completion(prompt)
+print(response)
