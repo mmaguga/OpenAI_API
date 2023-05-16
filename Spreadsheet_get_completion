@@ -1,0 +1,49 @@
+const sheet = SpreadsheetApp.openById('17QTcONMNXZULHt-AVf-rgkDnPkXvkwWQxAJRK7Qrd7Y').getSheetByName('LOOOP Free-text analysis');
+const SECRET_KEY = "YOUR_API_KEY"; // type here your OpenAI key
+
+const MAX_TOKENS = 300;
+const GPT_MODEL = "gpt-3.5-turbo"
+
+function onOpen() {
+  var ui = SpreadsheetApp.getUi();
+  ui.createMenu('Get Completion').addItem('Summarize Feedback', 'summarizeFeedback').addToUi();
+}
+
+function summarizeFeedback() {
+  var feedbackRange = sheet.getRange("B3");
+  var feedback = feedbackRange.getDisplayValue();
+
+  var prompt = `Your task is to generate a short summary of ${feedback} / Please summarise ${feedback} in no more than 100 characters / and get the completion from / Insights / Improvement opportunities / what respondents liked / and what respondents disliked:\n${feedback}`;
+  var summary = OpenAI(prompt);
+  sheet.getRange("K3").setValue(summary);
+}
+
+function OpenAI(prompt, temperature = 0, model = GPT_MODEL) {
+  const url = "https://api.openai.com/v1/chat/completions";
+  const payload = {
+    messages: [
+      { role: "system", content: "You are given the role of an AI language model. Your task is to generate a short summary of the given feedback in no more than 100 characters, considering Insights, Improvement opportunities, what respondents liked, and what respondents disliked." },
+      { role: "user", content: "Please summarize the following feedback: " + prompt }
+    ],
+    temperature: temperature,
+    max_tokens: MAX_TOKENS,
+    model: model
+  };
+  const options = {
+    method: "post",
+    contentType: "application/json",
+    headers: { Authorization: "Bearer " + SECRET_KEY },
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true,
+  };
+  const response = UrlFetchApp.fetch(url, options);
+  const res = JSON.parse(response.getContentText());
+
+  if (res.choices && res.choices.length > 0) {
+    const assistantMessage = res.choices[0].message.content.trim();
+    return assistantMessage;
+  } else {
+    console.error("Unexpected API response:", res);
+    return "";
+  }
+}
