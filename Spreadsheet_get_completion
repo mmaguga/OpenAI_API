@@ -1,6 +1,7 @@
 const sheet = SpreadsheetApp.openById('17QTcONMNXZULHt-AVf-rgkDnPkXvkwWQxAJRK7Qrd7Y').getSheetByName('LOOOP Free-text analysis');
 var secretKeyRange = sheet.getRange("J3"); // Here the Spreadsheet field where your OpenAI key is located
 var SECRET_KEY = secretKeyRange.getDisplayValue() 
+// const SECRET_KEY = "___";
 
 const MAX_TOKENS = 300;
 const GPT_MODEL = "gpt-3.5-turbo"
