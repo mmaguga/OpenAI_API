@@ -4,7 +4,7 @@ import openai
 from dotenv import load_dotenv, find_dotenv
 
 load_dotenv(find_dotenv())  # read local .env file
-openai.api_key = os.getenv('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')
+openai.api_key = os.getenv('___')
 
 app = Flask(__name__)
 
