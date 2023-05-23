@@ -2,16 +2,33 @@
 <html>
 <head>
     <title>Chatbot Example</title>
-    <style>
-        /* Add your custom styling here */
-        #messages-container {
-            width: 600px;
-            height: 300px;
-            border: 1px solid black;
-            overflow-y: scroll;
-            padding: 10px;
-        }
-    </style>
+<style>
+    /* Add your custom styling here */
+    #messages-container {
+        width: 400px;
+        height: 300px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        overflow-y: scroll;
+        padding: 10px;
+        background-color: #f8f8f8;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+    /* Style for user messages */
+    .user-message {
+        margin-bottom: 10px;
+    }
+    /* Style for chatbot messages */
+    .chatbot-message {
+        margin-bottom: 10px;
+    }
+    /* Style for message sender */
+    .message-sender {
+        font-weight: bold;
+    }
+</style>
 </head>
 <body>
     <div id="chat-container">
@@ -24,7 +41,7 @@
     <script src="https://apis.google.com/js/api.js" onload="initializeGoogleDocsAPI()"></script>
     <script>
         // OpenAI API configuration
-        const apiKey = "YOUR_OPENAI_API_KEY"; // Replace with your OpenAI API key
+        const apiKey = "YOUR_API_KEY"; // Replace with your OpenAI API key
         const apiUrl = "https://api.openai.com/v1/chat/completions";
         const model = "gpt-3.5-turbo";
         const temperature = 0.0;
@@ -36,8 +53,8 @@
             // Load the Google API client and authenticate with the service account credentials
             gapi.load('client', () => {
                 gapi.client.init({
-                    apiKey: 'YOUR_SERVICE_ACCOUNT_KEY', // Replace with your service account key
-                    clientId: 'YOUR_CLIENT_ID', // Replace with your client ID
+                    apiKey: 'SERVICE_ACCOUNT_KEY', // Replace with your service account key
+                    clientId: 'CLIENT_ID', // Replace with your client ID
                     discoveryDocs: ['https://docs.googleapis.com/$discovery/rest?version=v1'],
                     scope: 'https://www.googleapis.com/auth/documents.readonly'
                 }).then(() => {
@@ -71,7 +88,7 @@
             try {
                 // Make a request to the Google Docs API to retrieve the document content
                 const response = await gapi.client.docs.documents.get({
-                    documentId: 'YOUR_DOCUMENT_ID', // Replace with the actual document ID
+                    documentId: 'DOC_ID', // Replace with the actual document ID
                 });
 
                 // Extract the relevant content from the document based on the user input
@@ -130,4 +147,5 @@
     </script>
 </body>
 </html>
+
 
