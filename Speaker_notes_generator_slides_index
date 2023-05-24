@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Generate Speaker Notes</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    label {
+      font-weight: bold;
+    }
+
+    input[type="text"] {
+      padding: 8px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+
+    button[type="submit"] {
+      padding: 10px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button[type="submit"]:hover {
+      background-color: #45a049;
+    }
+
+    #output {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+  </style>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    $(document).ready(function() {
+      $("#speakerNotesForm").submit(function(event) {
+        event.preventDefault();
+
+        var slideId = $("#slideId").val();
+        var slideIndexes = $("#slideIndexes").val();
+
+        // Display loading popup
+        Swal.fire({
+          title: "Generating Speaker Notes",
+          text: "Please wait...",
+          allowOutsideClick: false,
+          onBeforeOpen: function() {
+            Swal.showLoading();
+          }
+        });
+
+        // Call the server-side function to generate speaker notes
+        google.script.run
+          .withSuccessHandler(function(response) {
+            // Close the loading popup
+            Swal.close();
+
+            // Show success message
+            Swal.fire({
+              icon: "success",
+              title: "Speaker Notes Successfully Generated",
+              text: response
+            });
+          })
+          .withFailureHandler(function(error) {
+            // Close the loading popup
+            Swal.close();
+
+            // Show error message
+            Swal.fire({
+              icon: "error",
+              title: "Error",
+              text: "An error occurred while generating speaker notes."
+            });
+          })
+          .generateSpeakerNotes({ slideId: slideId, slideIndexes: slideIndexes });
+      });
+    });
+  </script>
+</head>
+<body>
+  <h1>Generate Speaker Notes</h1>
+  <form id="speakerNotesForm">
+    <label for="slideId">Slide ID:</label>
+    <input type="text" id="slideId" required><br><br>
+    <label for="slideIndexes">Slide Indexes:</label>
+    <input type="text" id="slideIndexes" required><br><br>
+    <button type="submit">Generate Speaker Notes</button>
+  </form>
+
+  <div id="output"></div>
+</body>
+</html>
