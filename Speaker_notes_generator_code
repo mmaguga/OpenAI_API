@@ -1,0 +1,103 @@
+function doGet() {
+  return HtmlService.createHtmlOutputFromFile("index.html");
+}
+
+function generateSpeakerNotes(data) {
+  var slideDeckId = data.slideId;
+  var slideIndexes = data.slideIndexes.split("-").map(function(index) {
+    // Subtract 1 from each index to convert it to zero-based
+    return parseInt(index.trim()) - 1;
+  });
+
+  // Create an array of slide indexes based on the range
+  var slidesToProcess = [];
+  for (var i = slideIndexes[0]; i <= slideIndexes[1]; i++) {
+    slidesToProcess.push(i);
+  }
+
+  // Get the active presentation
+  var presentation = SlidesApp.openById(slideDeckId);
+
+  // Loop through each slide index
+  for (var i = 0; i < slidesToProcess.length; i++) {
+    var slideIndex = slidesToProcess[i];
+    var slide = presentation.getSlides()[slideIndex];
+
+    // Get the slide's notes page
+    var notesPage = slide.getNotesPage();
+
+    // Get the slide content
+    var slideContent = getSlideContent(slide);
+
+    // Generate speaker notes using ChatGPT
+    var generatedNotes = getSpeakerNotesFromText(slideContent);
+
+    // Set the generated speaker notes
+    notesPage.getSpeakerNotesShape().getText().setText(generatedNotes);
+
+    // Sleep for 20 seconds to comply with rate limits
+    Utilities.sleep(20000);
+  }
+
+  // Return success message
+  return "Speaker notes generated successfully.";
+}
+
+function getSlideContent(slide) {
+  var slideContent = "";
+
+  // Get all shapes in the slide
+  var shapes = slide.getShapes();
+
+  // Loop through each shape and append the text content to slideContent
+  for (var i = 0; i < shapes.length; i++) {
+    var shape = shapes[i];
+    if (shape.getText()) {
+      slideContent += shape.getText().asString() + " ";
+    }
+  }
+
+  return slideContent;
+}
+
+function getSpeakerNotesFromText(text) {
+  var apiKey = "YOUR_KEY"; // Replace with your ChatGPT API key
+  var apiUrl = "https://api.openai.com/v1/chat/completions";
+
+  var payload = {
+    model: "gpt-3.5-turbo", // Replace with your model ID or name
+    messages: [
+      {
+        role: "system",
+        content: "You are a speaker preparing notes for a presentation. Write speaker notes based on the slide content shown. The speaker notes should provide additional context and insights to accompany the slide content."
+      },
+      {
+        role: "user",
+        content: text
+      }
+    ]
+  };
+
+  var headers = {
+    "Authorization": "Bearer " + apiKey,
+    "Content-Type": "application/json"
+  };
+
+  var options = {
+    method: "post",
+    headers: headers,
+    payload: JSON.stringify(payload)
+  };
+
+  // Make the API request to ChatGPT
+  var response = UrlFetchApp.fetch(apiUrl, options);
+
+  // Parse and process the API response
+  var data = JSON.parse(response.getContentText());
+
+  // Extract the generated speaker notes from the response
+  var speakerNotes = data.choices[0].message.content;
+
+  // Return the generated speaker notes
+  return speakerNotes;
+}
