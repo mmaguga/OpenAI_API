@@ -37,71 +37,33 @@
         <button id="send-button">Send</button>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="https://apis.google.com/js/api.js" onload="initializeGoogleDocsAPI()"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
     <script>
         // OpenAI API configuration
         const apiKey = "YOUR_API_KEY"; // Replace with your OpenAI API key
-        const apiUrl = "https://api.openai.com/v1/chat/completions";
+        const apiUrl = "https://api.openai.com/v1/chat/completions"; // OpenAI model URL
         const model = "gpt-3.5-turbo";
         const temperature = 0.0;
         const maxTokens = 256;
         const messagesContainer = document.getElementById("messages-container");
 
-        // Function to initialize Google Docs API client library
-        function initializeGoogleDocsAPI() {
-            // Load the Google API client and authenticate with the service account credentials
-            gapi.load('client', () => {
-                gapi.client.init({
-                    apiKey: 'SERVICE_ACCOUNT_KEY', // Replace with your service account key
-                    clientId: 'CLIENT_ID', // Replace with your client ID
-                    discoveryDocs: ['https://docs.googleapis.com/$discovery/rest?version=v1'],
-                    scope: 'https://www.googleapis.com/auth/documents.readonly'
-                }).then(() => {
-                    // Google Docs API is ready to use
-                });
-            });
-        }
-
-        // Function to send a message to the OpenAI API and get a response
-        async function getChatbotResponse(message) {
-            // Retrieve additional tips or links from the Google Docs document based on the user's input
-            const additionalContent = await retrieveAdditionalContentFromDocs(message);
-
-            const response = await axios.post(apiUrl, {
-                messages: [{ role: "system", content: `You are a helpful assistant. ${additionalContent}` }, { role: "user", content: message }],
-                model,
-                temperature,
-                max_tokens: maxTokens
-            }, {
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${apiKey}`
-                }
-            });
-
-            return response.data.choices[0].message.content;
-        }
-
-        // Function to retrieve additional content from the Google Docs document based on user input
-        async function retrieveAdditionalContentFromDocs(userInput) {
+      // Function to retrieve additional content from the embedded Google Doc based on user input
+        function retrieveAdditionalContentFromDoc(userInput) {
             try {
-                // Make a request to the Google Docs API to retrieve the document content
-                const response = await gapi.client.docs.documents.get({
-                    documentId: 'DOC_ID', // Replace with the actual document ID
-                });
+                // Replace `DOCUMENT_ID` with the actual Google Doc ID
+                const docId = 'YOUR_DOCUMENT_ID';
+
+                // Replace `EMBEDDED_PAGE_URL` with the URL of the page where the Google Doc is embedded
+                const embeddedPageUrl = 'URL_FROM_EMBEDED_IN_THE_SITE';
+
+                // Access the content of the embedded Google Doc using DOM manipulation
+                const iframe = document.querySelector(`iframe[src*="${embeddedPageUrl}"]`);
+                const iframeContent = iframe.contentDocument || iframe.contentWindow.document;
+                const documentContent = iframeContent.documentElement.innerHTML;
 
                 // Extract the relevant content from the document based on the user input
-                const documentContent = response.result.body.content;
-                const additionalContent = documentContent
-                    .filter((content) => content.paragraph && content.paragraph.elements)
-                    .map((content) =>
-                        content.paragraph.elements
-                            .filter((element) => element.textRun && element.textRun.content.includes(userInput))
-                            .map((element) => element.textRun.content)
-                    )
-                    .flat()
-                    .join(' ');
+                // Modify this code to extract the desired information from the documentContent variable
+                const additionalContent = "Sample additional content";
 
                 // Return the additional content
                 return additionalContent;
@@ -110,6 +72,28 @@
                 return ''; // Return an empty string or handle the error accordingly
             }
         }
+
+        // Function to send a message to the OpenAI API and get a response
+        async function getChatbotResponse(message) {
+    const additionalContent = await retrieveAdditionalContentFromDoc(message);
+
+    const response = await axios.post(apiUrl, {
+    messages: [
+        { role: "system", content: "You are a helpful and insightful assistant that will answer the user's question by retrieving the required information from the additionalContent document" },
+        { role: "user", content: message }
+    ],
+    model,
+    temperature,
+    max_tokens: maxTokens
+}, {
+    headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+    }
+});
+
+    return response.data.choices[0].message.content;
+}
 
         // Function to handle user input and display the conversation
         function handleUserInput() {
@@ -121,6 +105,9 @@
 
             // Clear the input field
             userInput.value = "";
+
+          // Retrieve additional content from the embedded Google Doc
+            const additionalContent = retrieveAdditionalContentFromDoc(userMessage);
 
             // Get the chatbot's response
             getChatbotResponse(userMessage)
