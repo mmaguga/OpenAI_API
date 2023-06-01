@@ -50,75 +50,64 @@
         const maxTokens = 256;
         const messagesContainer = document.getElementById("messages-container");
 
-        // Function to retrieve additional content from Google Docs
-        function retrieveAdditionalContentFromDoc(message) {
-            google.script.run.withSuccessHandler(handleAdditionalContent).retrieveAdditionalContentFromDoc(message);
+        // Function to send a message to the OpenAI API and get a response
+        async function getChatbotResponse(message) {
+            const response = await axios.post(apiUrl, {
+                messages: [
+                    { role: "user", content: message }
+                ],
+                model,
+                temperature,
+                max_tokens: maxTokens
+            }, {
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${apiKey}`
+                }
+            });
+
+            return response.data.choices[0].message.content;
         }
 
-        // Function to handle additional content from Google Docs
-        function handleAdditionalContent(content) {
-            messagesContainer.innerHTML += `<p class="chatbot-message"><strong>Additional Content:</strong> ${content}</p>`;
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        // Function to handle user input and display the conversation
+        function handleUserInput() {
+          const userInput = document.getElementById("user-input");
+          const message = userInput.value;
+
+          messagesContainer.innerHTML += `<p class="user-message"><span class="message-sender">Me:</span> ${message}</p>`;
+          userInput.value = "";
+
+          const trigger = "Menu:";
+          const defaultMessage = "I'm sorry, but I couldn't find the information you're looking for.";
+          const systemContext = "You are OrderBot, an automated service to collect orders for a pizza restaurant called Richard567. / You will first greet the user, / and then you will wait for the user instructions, so to start collecting the order, / then, when the user asks for an item, ask if it's a pickup or delivery. / You will then wait to collect the entire order, / at the end, you will summarize it and check for a final time if the customer wants to add anything else. / If it's a delivery, you ask for an address. / Finally you will collect the payment. / Make sure to clarify all options, extras, / and sizes to uniquely identify the item from the menu. / You respond in a short, very conversational friendly style";
+
+          if (message.includes(trigger)) {
+            google.script.run.withSuccessHandler((docsContent) => {
+              getChatbotResponse(systemContext + ' ' + docsContent + ' ' + message)
+                .then((response) => {
+                  if (response.trim() === "") {
+                    messagesContainer.innerHTML += `<p class="chatbot-message"><span class="message-sender">Assistant Richard:</span> ${defaultMessage}</p>`;
+                  } else {
+                    messagesContainer.innerHTML += `<p class="chatbot-message"><span class="message-sender">Assistant Richard:</span> ${response}</p>`;
+                  }
+                  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                })
+                .catch((error) => {
+                  console.error("Error:", error);
+                });
+            }).getSystemContext();
+          } else {
+            getChatbotResponse(systemContext + ' ' + message)
+              .then((response) => {
+                messagesContainer.innerHTML += `<p class="chatbot-message"><span class="message-sender">Assistant Richard:</span> ${response}</p>`;
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+              })
+              .catch((error) => {
+                console.error("Error:", error);
+              });
+          }
         }
 
-
-
-// Function to send a message to the OpenAI API and get a response
-async function getChatbotResponse(message) {
-  // Define the system instruction
-  // const systemInstruction = "You are a helpful and insightful assistant that will answer the user's question, by retrieving the required information from the document";
-  const response = await axios.post(apiUrl, {
-    messages: [
-      { role: "system", content: "You are a helpful and insightful assistant, that will answer specific user questions regarding the document content. / You will first greet the user, and then answer their questions. / You will be concise, but conversational. / If the user ask a specific question regarding the content of the document, retrieve the instructed and relevant information from the document. / If you don't find the answer in the content of the document that the user mentions, then you need to truthfully say that you don't know the answer. Remember that the provided info to the user is contained within the content of the document, and in order to answer, you will need to extract info from the same content."},
-      { role: "user", content: message }
-    ],
-    model,
-    temperature,
-    max_tokens: maxTokens
-  }, {
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`
-    }
-  });
-
-  return response.data.choices[0].message.content;
-}
-
-// Function to handle user input and display the conversation
-function handleUserInput() {
-  const userInput = document.getElementById("user-input");
-  const userMessage = userInput.value;
-
-  // Display user message in the messages container
-  messagesContainer.innerHTML += `<p class="user-message"><strong>Me:</strong> ${userMessage}</p>`;
-
-  // Clear the input field
-  userInput.value = "";
-
-  // Check if the user's message is related to the document
-  if (userMessage.toLowerCase().includes("Content")) {
-    // Retrieve additional content from the embedded Google Doc
-    const additionalContent = retrieveAdditionalContentFromDoc();
-
-    // Display the additional content in the messages container
-    messagesContainer.innerHTML += `<p class="chatbot-message"><strong>Additional Content:</strong> ${additionalContent}</p>`;
-  } else {
-
-  // Get the chatbot's response
-  getChatbotResponse(userMessage)
-    .then((response) => {
-      // Display chatbot's response in the messages container
-      messagesContainer.innerHTML += `<p class="chatbot-message"><strong>Assistant Richard:</strong> ${response}</p>`;
-
-      // Scroll to the bottom of the messages container
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    })
-    .catch((error) => {
-      console.error("Error:", error);
-    });
-  }
-}
         // Attach event listeners
         document.getElementById("send-button").addEventListener("click", handleUserInput);
 
@@ -130,5 +119,3 @@ function handleUserInput() {
     </script>
 </body>
 </html>
-
-
