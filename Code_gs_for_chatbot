@@ -1,18 +1,20 @@
 function doGet() {
-  var htmlOutput = HtmlService.createHtmlOutputFromFile('chatbot.html');
-  return htmlOutput.setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  return HtmlService.createHtmlOutputFromFile('chatbot.html')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
-function retrieveAdditionalContentFromDoc() {
-  var documentId = 'YOUR_DOC_ID'; // Replace with the ID of your Google Docs file
-  var content = '';
-
-  var doc = DocumentApp.openById(documentId);
-  var paragraphs = doc.getBody().getParagraphs();
+function getSystemContext() {
+  const documentId = 'DOC_ID';
+  const doc = DocumentApp.openById(documentId);
+  const paragraphs = doc.getBody().getParagraphs();
 
   for (var i = 0; i < paragraphs.length; i++) {
-    content += paragraphs[i].getText();
+    const paragraphText = paragraphs[i].getText().trim();
+
+    if (paragraphText.indexOf('System context =') === 0) {
+      return paragraphText.replace('System context =', '').trim();
+    }
   }
 
-  return content;
+  return null;
 }
