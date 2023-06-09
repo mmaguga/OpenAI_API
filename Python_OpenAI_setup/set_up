@@ -1,3 +1,5 @@
+*In order to setup the OpenAi python package, a ".env" file needs to be created within the JupyterLab directory, with the openAI key on it: "OPENAI_API_KEY=my_api_key"
+
 import openai
 import os
 
